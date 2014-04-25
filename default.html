@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+<head lang="zh">
+    <meta charset="UTF-8">
+    <title></title>
+    <script src="/Static/scripts/jquery-1.7.2.min.js" type="text/javascript"></script>
+</head>
+
+<body>
+<textarea id="input" style="float: left;" name="" id="" cols="30" rows="100"></textarea>
+<button id="excute" style="float: left;">批量查询</button>
+<div style="float: left;"><table border="2">
+    <tbody id="result"></tbody>
+</table></div>
+<script>
+    $('#excute').click(function(){
+        var aName=$('#input').val().trim().split('\n');
+        var $tbody=$('#result').html('');
+        for(i=0;i<aName.length;i++){
+            var data=getDataPage(aName[i],function(){
+                //console.log(this);
+                $tbody.append('<tr><td>'+this.LineTitle+'</td><td><a target="_blank" href="http://www.gzl.com.cn'+this.Link+'">http://www.gzl.com.cn'+this.Link+'</td></tr></a>');
+            });
+            //console.log(data);
+            //$tbody.append('<tr><td>'+data.LineTitle+'</td><td>'+data.Link+'</td></tr>');
+        }
+    });
+
+    function getDataPage(name,callback) {
+        var beginDate = "";// $("#txt_beginDate").val(); //填写开始时间
+        var endDate = "";// $("#txt_endDate").val(); //填写结束时间
+        var days = 0; //天数
+        var dates = 0; //月份
+        var beginPrice = ''; //开始金额
+        var endPrice = ''; //结束金额
+        var orderby = ''; //排序
+        var key1 = name;
+        var beginPriceText = '';
+        var endPriceText = '';
+        var bigArea = '';
+        var smallArea = '';
+
+
+        var pagesize = 10;
+        $.ajax({
+            url: "/Travels/AjaxHandler/TravelListAjax.aspx",
+            type: "post",
+            async: false,
+            data: "Action=TravelListShow&beginDate=" + beginDate + "&endDate=" + endDate + "&days=" + days +
+                    "&dates=" + dates + "&beginPrice=" + beginPrice + "&endPrice=" + endPrice + "&bigArea=" + bigArea + "&smallArea=" + smallArea +
+                    "&orderby=" + orderby + "&beginPriceText=" + beginPriceText + "&endPriceText=" + endPriceText +
+                    "&key1=" + key1 + "&pageIndex=" + 1 + "&pageSize=" + pagesize,
+            beforeSend: function () {
+                //ZENG.msgbox.show(" 正在查询，请稍候...", 6, 30000);
+            },
+            success: function (data) {
+                var source = eval("(" + data + ")").DataString;
+                //console.log(pager);
+                this.data= {'LineTitle':$(source).find('a:eq(0)').text(),'Link':$(source).find('a:eq(0)').attr('href')}
+//                var LineTitle=;
+//                var Link=;
+                callback.call(this.data);
+            },
+            //complete: function () { ZENG.msgbox.hide(); },
+            error: function (a, b, c) {
+                var data= {'LineTitle':'错误','Link':'错误'};
+                callback.call(this.data);
+            }
+        });
+        //return {LineTitle:'错误',Link:'错误'}
+    }
+    //getDataPage();
+
+</script>
+</body>
+</html>
