@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title></title>
     <script src="/Static/scripts/jquery-1.7.2.min.js" type="text/javascript"></script>
+    <script src="/subject/edit/lib/Response.js"></script>
 </head>
 
 <body>
@@ -13,17 +14,28 @@
     <tbody id="result"></tbody>
 </table></div>
 <script>
+    Response.uiController.drawBox();
+    var timer;
+    var $tbody=$('#result');
+    var aName=[];
     $('#excute').click(function(){
-        var aName=$('#input').val().trim().split('\n');
-        var $tbody=$('#result').html('');
-        for(i=0;i<aName.length;i++){
-            var data=getDataPage(aName[i],function(){
-                //console.log(this);
-                $tbody.append('<tr><td>'+this.LineTitle+'</td><td><a target="_blank" href="http://www.gzl.com.cn'+this.Link+'">http://www.gzl.com.cn'+this.Link+'</td></tr></a>');
-            });
-            //console.log(data);
-            //$tbody.append('<tr><td>'+data.LineTitle+'</td><td>'+data.Link+'</td></tr>');
-        }
+        aName=$('#input').val().trim().split('\n');
+        $tbody=$('#result').html('');
+        clearTimeout(timer);
+        Response.uiController.showLoadingBox();
+        timer=setTimeout(function(){
+            for(i=0;i<aName.length;i++){
+                var data=getDataPage(aName[i],function(){
+                    $tbody.append('<tr><td>'+this.LineTitle+'</td><td><a target="_blank" href="http://www.gzl.com.cn'+this.Link+'">http://www.gzl.com.cn'+this.Link+'</td></tr></a>');
+                });
+                if(i==aName.length-1){
+                    Response.uiController.showComputedResult();
+                    Response.uiController.completeHideResultBox();
+                    Response.clearResultCount();
+                }
+            }
+        },1000);
+
     });
 
     function getDataPage(name,callback) {
@@ -50,20 +62,22 @@
                     "&dates=" + dates + "&beginPrice=" + beginPrice + "&endPrice=" + endPrice + "&bigArea=" + bigArea + "&smallArea=" + smallArea +
                     "&orderby=" + orderby + "&beginPriceText=" + beginPriceText + "&endPriceText=" + endPriceText +
                     "&key1=" + key1 + "&pageIndex=" + 1 + "&pageSize=" + pagesize,
-            beforeSend: function () {
-                //ZENG.msgbox.show(" 正在查询，请稍候...", 6, 30000);
-            },
+            timeout:2000,
             success: function (data) {
                 var source = eval("(" + data + ")").DataString;
                 //console.log(pager);
-                this.data= {'LineTitle':$(source).find('a:eq(0)').text(),'Link':$(source).find('a:eq(0)').attr('href')}
-//                var LineTitle=;
-//                var Link=;
+                Response.resultSuccess++;
+                if(source!=""){
+                    this.data= {'LineTitle':$(source).find('a:eq(0)').text(),'Link':$(source).find('a:eq(0)').attr('href')};
+                }else{
+                    this.data= {'LineTitle':'找不到相关线路','Link':'#'};
+                }
                 callback.call(this.data);
             },
             //complete: function () { ZENG.msgbox.hide(); },
             error: function (a, b, c) {
                 var data= {'LineTitle':'错误','Link':'错误'};
+                Response.resultFalure++;
                 callback.call(this.data);
             }
         });
